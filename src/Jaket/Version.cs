@@ -12,7 +12,7 @@ using static Jaket.UI.Rect;
 public class Version
 {
     /// <summary> Current version of the mod installed by the player. </summary>
-    public const string CURRENT = "1.3.0";
+    public const string CURRENT = "1.3.42";
     /// <summary> Repository of the mod, where the newest version will be taken from. </summary>
     public const string REPO = "xzxADIxzx/Join-and-kill-em-together";
     /// <summary> Github API URL. I think it's not difficult to guess. </summary>
@@ -21,7 +21,7 @@ public class Version
     public const string TAG = "\"tag_name\": \"V", NAME = "\"name\": \"";
 
     /// <summary> Notifies the player that their version of the mod doesn't match the host's one. </summary>
-    public static void Notify() => Bundle.Hud("version.host-outdated");
+    public static void Notify() => Bundle.Hud2NS("version.host-outdated");
 
     /// <summary> Checks for updates using Github and notifies the player about it. </summary>
     public static void Check4Update() => Fetch((done, result) =>

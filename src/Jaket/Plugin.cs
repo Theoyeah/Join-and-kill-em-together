@@ -3,6 +3,7 @@
 using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -20,7 +21,7 @@ public class PluginLoader : BaseUnityPlugin
 {
     private void Awake() => SceneManager.sceneLoaded += (_, _) =>
     {
-        if (Plugin.Instance == null) Tools.Create<Plugin>("Jaket").Location = Info.Location;
+        if (Plugin.Instance == null) Tools.Create<Plugin>("Jaket").Location = Path.GetDirectoryName(Info.Location);
     };
 }
 
@@ -35,7 +36,8 @@ public class Plugin : MonoBehaviour
     public string Location;
 
     /// <summary> List of mods compatible with Jaket. </summary>
-    public static readonly string[] Compatible = { "Jaket", "CrosshairColorFixer", "IntroSkip", "Healthbars", "RcHud", "PluginConfigurator", "AngryLevelLoader" };
+    public static readonly string[] Compatible =
+    { "Jaket", "CrosshairColorFixer", "IntroSkip", "Healthbars", "xyz.parsl.damage_stats", "RcHud", "WallJumpHUD", "HUD Config", "PluginConfigurator", "AngryLevelLoader", "DoomahLevelLoader" };
     /// <summary> Whether at least on incompatible mod is loaded. </summary>
     public bool HasIncompatibility;
 
@@ -72,7 +74,7 @@ public class Plugin : MonoBehaviour
         Weapons.Load();
         Bullets.Load();
         Items.Load();
-        DollAssets.Load();
+        ModAssets.Load();
 
         Administration.Load();
         LobbyController.Load();
@@ -81,6 +83,7 @@ public class Plugin : MonoBehaviour
 
         World.World.Load();
         WorldActionsList.Load();
+        Votes.Load();
         Movement.Load();
         SprayManager.Load();
 

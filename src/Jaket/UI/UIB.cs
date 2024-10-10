@@ -34,8 +34,8 @@ public class UIB
         Action fix;
         Events.OnLoaded += fix = () => Events.Post(() =>
         {
-            HudMessageReceiver.Instance.text.font = DollAssets.FontTMP;
-            NewMovement.Instance.youDiedText.font = DollAssets.Font;
+            HudMessageReceiver.Instance.text.font = ModAssets.FontTMP;
+            NewMovement.Instance.youDiedText.font = ModAssets.Font;
 
             // fix the sorting order to display hud messages on top of other interface fragments
             if (!HudMessageReceiver.Instance.TryGetComponent<Canvas>(out _)) Component<Canvas>(HudMessageReceiver.Instance.gameObject, canvas =>
@@ -146,7 +146,7 @@ public class UIB
         {
             text.text = name.StartsWith("#") ? Bundle.Get(name.Substring(1)) : name;
             text.color = color ?? white;
-            text.font = DollAssets.Font;
+            text.font = ModAssets.Font;
             text.fontSize = size;
             text.alignment = align;
         });
@@ -165,22 +165,14 @@ public class UIB
         });
 
     /// <summary> Adds a circular image. </summary>
-    public static UICircle CircleImage(string name, Transform parent, Rect r, float arc, int rotation, float thickness, bool outline = false)
-    {
-        var obj = Rect(name, parent, r).gameObject;
-        if (outline) Component<Outline>(obj, outline =>
-        {
-            outline.effectDistance = new(3f, -3f);
-            outline.effectColor = white;
-        });
-        return Component<UICircle>(obj, circle =>
+    public static UICircle CircleImage(string name, Transform parent, Rect r, float arc, int rotation, float thickness) =>
+        Component<UICircle>(Rect(name, parent, r).gameObject, circle =>
         {
             circle.Arc = arc;
             circle.ArcRotation = rotation;
             circle.Thickness = thickness;
             circle.Fill = false;
         });
-    }
 
     /// <summary> Adds a diamond-shaped image. </summary>
     public static DiamondGraph DiamondImage(string name, Transform parent, Rect r, float a, float b, float c, float d, Color? color = null) =>
@@ -247,6 +239,19 @@ public class UIB
         });
     }
 
+    /// <summary> Adds a button corresponding to the shop style. </summary>
+    public static Button ShopButton(string name, Transform parent, Rect r, Action clicked)
+    {
+        var img = Image(name, parent, r, shopc, fill: false);
+        Text(name, img.transform, Huge, size: 280).transform.localScale /= 10f;
+        return Component<Button>(img.gameObject, button =>
+        {
+            button.targetGraphic = img;
+            button.colors = colors;
+            button.onClick.AddListener(() => clicked());
+        });
+    }
+
     /// <summary> Adds a button corresponding to the Discord style and opening a link to our server. </summary>
     public static Button DiscordButton(string name, Transform parent)
     {
@@ -256,6 +261,18 @@ public class UIB
         {
             button.targetGraphic = img;
             button.onClick.AddListener(() => Application.OpenURL("https://discord.gg/USpt3hCBgn"));
+        });
+    }
+
+    /// <summary> Adds a button corresponding to the Buy Me a Coffee style and opening a link to my page. </summary>
+    public static Button BMaCButton(string name, Transform parent)
+    {
+        var img = Image(name, parent, Btn(0f), bmac);
+        Text(name, img.transform, Huge, size: 240).transform.localScale /= 10f;
+        return Component<Button>(img.gameObject, button =>
+        {
+            button.targetGraphic = img;
+            button.onClick.AddListener(() => Application.OpenURL("https://www.buymeacoffee.com/adithedev"));
         });
     }
 

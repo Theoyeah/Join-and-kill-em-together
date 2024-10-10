@@ -4,6 +4,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using ULTRAKILL.Cheats;
 using UnityEngine;
+using UnityEngine.UI;
 
 using Jaket.Net;
 using Jaket.Net.Types;
@@ -31,17 +32,15 @@ public class ArenaPatch
         // there is a large check caused by complex game logic that has to be repeated
         if (DisableEnemySpawns.DisableArenaTriggers || (__instance.waitForStatus > 0 && (___astat == null || ___astat.currentStatus < __instance.waitForStatus))) return;
 
-        // launch the arena when a remote player entered it
-        if (!__instance.activated && other.name == "Net" && other.GetComponent<RemotePlayer>() != null) __instance.Activate();
+        // launch the arena when a remote player enters it
+        if (!__instance.activated && other.name == "Net" && other.TryGetComponent<RemotePlayer>(out _)) __instance.Activate();
     }
 }
 
 [HarmonyPatch(typeof(CheckPoint))]
 public class RoomPatch
 {
-    /// <summary> Copy of the list of the rooms to reset. </summary>
-    private static List<GameObject> rooms;
-    /// <summary> Fake class needed so that the checkpoint does not recreates the rooms at the first activation. </summary>
+    /// <summary> Fake needed to prohibit the checkpoint to recreate the rooms at the first activation. </summary>
     private class FakeList : List<GameObject> { public new int Count => 0; }
 
     [HarmonyPrefix]
@@ -55,21 +54,15 @@ public class RoomPatch
     [HarmonyPatch(nameof(CheckPoint.OnRespawn))]
     static void ClearRooms(CheckPoint __instance)
     {
-        if (LobbyController.Online)
-        {
-            rooms = __instance.newRooms;
-            __instance.newRooms = new();
-        }
+        if (LobbyController.Online) __instance.newRooms.Clear();
     }
 
     [HarmonyPostfix]
     [HarmonyPatch(nameof(CheckPoint.OnRespawn))]
-    static void RestoreRooms(CheckPoint __instance)
+    static void Respawn(CheckPoint __instance)
     {
         if (LobbyController.Online)
         {
-            __instance.newRooms = rooms;
-
             __instance.onRestart?.Invoke();
             __instance.toActivate?.SetActive(true);
 
@@ -139,6 +132,13 @@ public class ActionPatch
     }
 
     [HarmonyPostfix]
+    [HarmonyPatch(typeof(Flammable), nameof(Flammable.Burn))]
+    static void Activate(Flammable __instance, float newHeat)
+    {
+        if (LobbyController.Online && newHeat == 4f) World.SyncAction(__instance, 7);
+    }
+
+    [HarmonyPostfix]
     [HarmonyPatch(typeof(StatueActivator), "Start")]
     static void Activate(StatueActivator __instance)
     {
@@ -150,5 +150,16 @@ public class ActionPatch
     static void FillBlood(BloodFiller __instance)
     {
         if (LobbyController.Online && LobbyController.IsOwner) World.SyncAction(__instance, 6);
+    }
+}
+
+[HarmonyPatch(typeof(IntermissionController))]
+public class LovelyPatch
+{
+    [HarmonyPrefix]
+    [HarmonyPatch("Start")]
+    static void Name(IntermissionController __instance)
+    {
+        if (LobbyController.Online) Votes.Name(__instance.GetComponent<Text>(), ref __instance.preText);
     }
 }

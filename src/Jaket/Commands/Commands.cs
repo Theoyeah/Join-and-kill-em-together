@@ -23,7 +23,7 @@ public class Commands
         {
             Handler.Commands.ForEach(command =>
             {
-                chat.Receive($"[14]* /{command.Name}{(command.Args == null ? "" : $" [#BBBBBB]{command.Args}[]")} - {command.Desc}[]");
+                chat.Receive($"[14]/{command.Name}{(command.Args == null ? "" : $" [#BBBBBB]{command.Args}[]")} - {command.Desc}[]");
             });
         });
         Handler.Register("hello", "Resend the tips for new players", args => chat.Hello(true));
@@ -59,24 +59,32 @@ public class Commands
 
         Handler.Register("plushies", "Display the list of all dev plushies", args =>
         {
-            string[] plushies = (string[])GameAssets.PlushiesButReadable.Clone();
-            Array.Sort(plushies); // sort alphabetically for a more presentable look
+            void Msg(string role, string devs) => chat.Receive($"[14]{role}:\n{devs}{(role[0] == 'M' ? "" : "\n")}[]");
 
-            chat.Receive(string.Join(", ", plushies));
+            Msg("Leading developers", "Hakita, Pitr, Victoria");
+            Msg("Programmers", "Heckteck, CabalCrow, Lucas");
+            Msg("Artists", "Francis, Jericho, BigRock, Mako, Samuel, Salad");
+            Msg("Composers", "Meganeko, KGC, BJ, Jake, John, Quetzal");
+            Msg("Voice actors", "Gianni, Weyte, Lenval, Joy, Mandy");
+            Msg("Quality assurance", "Cameron, Dalia, Tucker, Scott");
+            Msg("Other", "Jacob, Vvizard");
+            Msg("Machines", "V1, V2, V3, xzxADIxzx, Sowler");
         });
-        Handler.Register("plushy", "<name>", "Spawn a plushy by name", args =>
+        Handler.Register("plushie", "<name>", "Spawn a plushie by name", args =>
         {
             string name = args.Length == 0 ? null : args[0].ToLower();
-            int index = Array.FindIndex(GameAssets.PlushiesButReadable, plushy => plushy.ToLower() == name);
+            int index = Array.FindIndex(GameAssets.PlushiesButReadable, plushie => plushie.Contains(name));
 
             if (index == -1)
-                chat.Receive($"[#FF341C]Plushy named {name} not found.");
+                chat.Receive($"[#FF341C]Plushie named {name} not found.");
             else
-                Tools.Instantiate(Items.Prefabs[EntityType.PlushyOffset + index - EntityType.ItemOffset].gameObject, NewMovement.Instance.transform.position);
+                Tools.Instantiate(Items.Prefabs[EntityType.PlushieOffset + index - EntityType.ItemOffset], NewMovement.Instance.transform.position);
         });
 
-        Handler.Register("level", "<layer> <level> / sandbox / the-cyber-grind", "Load the given level", args =>
+        Handler.Register("level", "<layer> <level> / sandbox / cyber grind / museum", "Load a level", args =>
         {
+            if (args.Length == 1 && args[0].Contains("-")) args = args[0].Split('-');
+
             if (!LobbyController.IsOwner)
                 chat.Receive($"[#FF341C]Only the lobby owner can load levels.");
 
@@ -89,6 +97,11 @@ public class Commands
             {
                 Tools.Load("Endless");
                 chat.Receive("[#32CD32]The Cyber Grind is loading.");
+            }
+            else if (args.Length >= 1 && (args[0].ToLower().Contains("credits") || args[0].ToLower() == "museum"))
+            {
+                Tools.Load("CreditsMuseum2");
+                chat.Receive("[#32CD32]The Credits Museum is loading.");
             }
             else if (args.Length < 2)
                 chat.Receive($"[#FF341C]Insufficient number of arguments.");
@@ -126,7 +139,7 @@ public class Commands
             Msg("* [#FFA000]Fumboy[] - textures and a part of animations");
 
             Msg("Contributors:");
-            Msg("* [#00E666]Rey Hunter[] - really cool icons for emotions");
+            Msg("* [#00E666]Rey Hunter[] - really cool icons for emotes");
             Msg("* [#00E666]Ardub[] - invaluable help with The Cyber Grind [12][#cccccc](he did 90% of the work)");
             Msg("* [#00E666]Kekson1a[] - Steam Rich Presence support");
 
@@ -139,6 +152,6 @@ public class Commands
 
             chat.Receive("0096FF", Chat.BOT_PREFIX + "xzxADIxzx", "Thank you all, I couldn't have done it alone ♡");
         });
-        Handler.Register("support", "Support the author by buying him a coffee", args => Application.OpenURL("https://www.buymeacoffee.com/adidev"));
+        Handler.Register("support", "Support the author by buying him a coffee", args => Application.OpenURL("https://www.buymeacoffee.com/adithedev"));
     }
 }

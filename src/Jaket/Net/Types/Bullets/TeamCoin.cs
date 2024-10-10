@@ -62,7 +62,7 @@ public class TeamCoin : OwnableEntity
                 mat ??= GetComponent<Renderer>().material;
                 trail ??= GetComponent<TrailRenderer>();
 
-                mat.mainTexture = DollAssets.CoinTexture;
+                mat.mainTexture = ModAssets.CoinTexture;
                 mat.color = Team.Color();
                 trail.startColor = Team.Color() with { a = .5f };
             }
@@ -72,9 +72,8 @@ public class TeamCoin : OwnableEntity
         TryGetComponent(out audio);
 
         x = new(); y = new(); z = new();
-        if (IsOwner) OnTransferred();
 
-        coin.doubled = true; // for some reason, without this, the coin cannot be punched
+        if (IsOwner) OnTransferred();
         Coins.Alive.Add(this);
     }
 
@@ -115,7 +114,7 @@ public class TeamCoin : OwnableEntity
     private void Activate()
     {
         foreach (var col in cols) col.enabled = true;
-        coin.enabled = true;
+        if (coin) coin.enabled = true;
     }
 
     private void Effect(GameObject flash, float size)
@@ -129,6 +128,8 @@ public class TeamCoin : OwnableEntity
 
     private void Double()
     {
+        coin.doubled = true; // for some reason, without this, the coin cannot be punched
+
         doubled = true;
         Effect(coin.flash, 20f);
     }
@@ -149,7 +150,7 @@ public class TeamCoin : OwnableEntity
         mat.mainTexture = null; // the texture has its own color, which is extremely undesirable
     }
 
-    private void Quadruple()
+    private void Quadruple(bool silent = false)
     {
         quadrupled = true;
         Effect(coin.enemyFlash, 15f);
@@ -157,6 +158,7 @@ public class TeamCoin : OwnableEntity
         var light = effect.GetComponent<Light>();
         light.color = Team.Color();
         light.intensity = 10f;
+        if (silent) Destroy(effect.GetComponent<AudioSource>());
     }
 
     private void Reset()
@@ -208,7 +210,7 @@ public class TeamCoin : OwnableEntity
         if (isPlayer || isEnemy)
         {
             TakeOwnage();
-            Quadruple();
+            Quadruple(isEnemy);
         }
         Invoke("Reflect", (isPlayer ? 1.2f : isEnemy ? .3f : .1f) + offset);
 
@@ -254,6 +256,8 @@ public class TeamCoin : OwnableEntity
                 rb.damage += power / 4f - rb.addedDamage;
                 rb.addedDamage = power / 4f;
             }
+
+            if (doubled && rb.strongAlt && rb.hitAmount < 99) rb.maxHitsPerTarget = ++rb.hitAmount;
 
             if (quadrupled)
             {
@@ -376,7 +380,7 @@ public class TeamCoin : OwnableEntity
         Coins.Alive.Remove(this);
 
         mat = GetComponent<Renderer>().material;
-        mat.mainTexture = DollAssets.CoinTexture;
+        mat.mainTexture = ModAssets.CoinTexture;
         mat.color = Team.Color();
     }
 

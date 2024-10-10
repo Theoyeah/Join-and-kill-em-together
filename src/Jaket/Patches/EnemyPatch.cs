@@ -23,7 +23,7 @@ public class EnemyPatch
 
     [HarmonyPrefix]
     [HarmonyPatch("UpdateTarget")]
-    static bool Skip() => Time.frameCount % (1 + Networking.Entities.Count / 16) == 0;
+    static bool Skip() => Time.frameCount % 8 == 0;
 
     [HarmonyPostfix]
     [HarmonyPatch("UpdateTarget")]
@@ -84,6 +84,13 @@ public class LogicPatch
     static void OutroG2(ref bool ___bossVersion)
     {
         if (LobbyController.Online && Tools.Scene == "Level 6-2") ___bossVersion = true;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Wicked), "Update")]
+    static void WickedLogic(EnemyIdentifier ___eid)
+    {
+        if (LobbyController.Online) ___eid.totalSpeedModifier = 1f + LobbyController.PPP;
     }
 }
 

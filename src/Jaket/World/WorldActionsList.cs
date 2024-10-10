@@ -67,6 +67,33 @@ OPENING ALL DOORS... <color=#32CD32>DONE</color>";
         NetAction.Sync(l, "DelayedDoorActivation", new(175f, -6f, 382f));
 
         #endregion
+        #region 0-S
+        l = "Level 0-S";
+
+        StaticAction.Find(l, "Cube", new(0f, -7.6f, 30f), obj => // blue altar
+        {
+            if (obj.TryGetComponent(out ItemPlaceZone zone)) zone.deactivateOnSuccess = new[] { zone.deactivateOnSuccess[0] };
+        });
+        StaticAction.Find(l, "Cube", new(-60f, -7.6f, 17.5f), obj => // red altar
+        {
+            if (obj.TryGetComponent(out ItemPlaceZone zone)) zone.deactivateOnSuccess = new GameObject[0];
+        });
+        StaticAction.Enable(l, "Wicked", new(-60f, -10f, 30f));
+
+        StaticAction.Find(l, "Cube", new(-65f, -30.5f, 180f), obj => UIB.Component<HurtZone>(obj, zone =>
+        {
+            zone.bounceForce = 100f; // allow players to get out of acid
+            zone.damageType = EnviroDamageType.Acid;
+            zone.setDamage = 20f;
+            zone.trigger = true;
+        }));
+
+        NetAction.Sync(l, "Cube", new(-56.6f, -21.4f, -5.9f), obj =>
+        {
+            if (NewMovement.Instance.dead) Movement.Instance.Respawn(new(-60f, -8.5f, 30f), 180f);
+        });
+
+        #endregion
         #region 1-2
         l = "Level 1-2";
 
@@ -124,6 +151,8 @@ OPENING ALL DOORS... <color=#32CD32>DONE</color>";
         #region 3-2
         l = "Level 3-2";
 
+        StaticAction.Destroy(l, "Door", new(-10f, -161f, 955f));
+
         NetAction.Sync(l, "Cube", new(-5f, -121f, 965f), obj => Teleporter.Teleport(new(-5f, -159.5f, 970f))); // boss
 
         #endregion
@@ -164,13 +193,13 @@ OPENING ALL DOORS... <color=#32CD32>DONE</color>";
 
         StaticAction.Find(l, "SecondVersionActivator", new(117.5f, 663.5f, 323f), obj => obj.GetComponent<ObjectActivator>().events.onActivate.AddListener(() =>
         {
-            Networking.EachEntity(e => e.Type == EntityType.V2_GreenArm, e => e.gameObject.SetActive(true));
+            Networking.Entities.Alive(e => e.Type == EntityType.V2_GreenArm, e => e.gameObject.SetActive(true));
         }));
 
         NetAction.Sync(l, "Trigger", new(117.5f, 678.5f, 273f)); // boss
         NetAction.Sync(l, "ExitTrigger", new(172.5f, 668.5f, 263f), obj =>
         {
-            Networking.EachEntity(e => e.Type == EntityType.V2_GreenArm, e => e.gameObject.SetActive(false));
+            Networking.Entities.Alive(e => e.Type == EntityType.V2_GreenArm, e => e.gameObject.SetActive(false));
         });
         NetAction.Sync(l, "BossOutro", new(117.5f, 663.5f, 323f));
         NetAction.Sync(l, "ExitBuilding Raise", new(1027f, 261f, 202.5f), obj =>
@@ -188,6 +217,7 @@ OPENING ALL DOORS... <color=#32CD32>DONE</color>";
         #region 5-1
         l = "Level 5-1";
 
+        StaticAction.Find(l, "1 - Main Cave", new(0f, -50f, 350f), obj => obj.GetComponent<ObjectActivator>().events.toDisActivateObjects[0] = null);
         StaticAction.Destroy(l, "HudMessage", new(0f, -100f, 295.5f));
         StaticAction.Destroy(l, "Door", new(218.5f, -41f, 234.5f));
 
@@ -199,6 +229,25 @@ OPENING ALL DOORS... <color=#32CD32>DONE</color>";
         #endregion
         #region 5-2
         l = "Level 5-2";
+
+        StaticAction.Find(l, "Panel", new(960f, 540f, 0f), obj =>
+        {
+            var uwu = obj.GetComponent<ImageFadeIn>();
+            if (uwu == null) return;
+
+            uwu.onFull = new();
+            uwu.onFull.AddListener(() =>
+            {
+                Tools.Destroy(obj);
+                Tools.Destroy(Tools.ObjFind("Jakito Huge"));
+
+                var sea = Tools.ObjFind("Sea").transform;
+                sea.Find("SeaAmbiance").gameObject.SetActive(true);
+                sea.Find("SeaAmbiance (Waves)").gameObject.SetActive(true);
+
+                HudMessageReceiver.Instance?.SendHudMessage("<size=48>Haha</size>", silent: true);
+            });
+        });
 
         StaticAction.Destroy(l, "SkullBlue", new(-3.700458f, -1.589029f, 950.6616f));
         StaticAction.Destroy(l, "Arena 1", new(87.5f, -53f, 1240f));
@@ -351,13 +400,15 @@ OPENING ALL DOORS... <color=#32CD32>DONE</color>";
             trigger.events.toDisActivateObjects = new[] { trigger.gameObject };
         });
 
+        StaticAction.Destroy(l, "15 Activator (Station)", new(46.5001f, 24.5f, 701.25f));
+
         // enable the track points at the level
         StaticAction.Enable(l, "0 - Door 1", new(46.5f, 26.75f, 753.75f));
         StaticAction.Enable(l, "1.25 - Door 2", new(46.5f, 26.75f, 788.75f));
         StaticAction.Enable(l, "2.25 - Door 3", new(46.5f, 26.75f, 823.75f));
         StaticAction.Enable(l, "3.5 - Door 4", new(46.5f, 26.75f, 858.75f));
 
-        NetAction.Sync(l, "Trigger", new(-115f, 50f, 348.5f));
+        NetAction.Sync(l, "Trigger", new(-115f, 50f, 348.5f)); // boss
         NetAction.Sync(l, "TowerDestruction", new(-119.75f, 34f, 552.25f));
 
         // library
@@ -437,6 +488,49 @@ OPENING ALL DOORS... <color=#32CD32>DONE</color>";
 
         // move the death zone, because entities spawn at the origin
         StaticAction.Find(l, "Cube", new(-40f, 0.5f, 102.5f), obj => obj.transform.position = new(-40f, -10f, 102.5f));
+
+        #endregion
+        #region unfinished
+
+        // duplicate torches at levels 4-3 and P-1
+        StaticAction.PlaceTorches("Level P-1", new(-0.84f, -10f, 16.4f), 2f);
+
+        // disable door blocker
+        StaticAction.Find("Level P-1", "Trigger", new(360f, -568.5f, 110f), obj =>
+        {
+            obj.GetComponent<ObjectActivator>().events.toActivateObjects[4] = null;
+        });
+        StaticAction.Find("Level P-2", "FightActivator", new(-102f, -61.25f, -450f), obj =>
+        {
+            var act = obj.GetComponent<ObjectActivator>();
+            act.events.onActivate = new(); // gothic door
+            act.events.toActivateObjects[2] = null; // wall collider
+            act.events.toDisActivateObjects[1] = null; // entry collider
+            act.events.toDisActivateObjects[2] = null; // elevator
+        });
+
+        // Minos & Sisyphus have unique cutscenes and non-functional level exits
+        NetAction.Sync("Level P-1", "MinosPrimeIntro", new(405f, -598.5f, 110f));
+        NetAction.Sync("Level P-1", "End", new(405f, -598.5f, 110f), obj =>
+        {
+            obj.transform.parent.Find("Cube (2)").gameObject.SetActive(false);
+
+            Tools.ObjFind("Music 3").SetActive(false);
+            obj.transform.parent.Find("Lights").gameObject.SetActive(false);
+
+            StatsManager.Instance.StopTimer();
+        });
+        NetAction.Sync("Level P-2", "PrimeIntro", new(-102f, -61.25f, -450f));
+        NetAction.Sync("Level P-2", "Outro", new(-102f, -61.25f, -450f), obj =>
+        {
+            obj.transform.parent.Find("Backwall").gameObject.SetActive(false);
+
+            Tools.ObjFind("BossMusics/Sisyphus").SetActive(false);
+            Tools.ObjFind("IntroObjects/Decorations").SetActive(false);
+            Tools.ObjFind("Rain").SetActive(false);
+
+            StatsManager.Instance.StopTimer();
+        });
 
         #endregion
     }
